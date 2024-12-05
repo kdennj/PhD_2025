@@ -1,0 +1,18 @@
+Population structure analysis;
+
+1A/ Filtering VCF for ADMIXTURE
+/ei/projects/3/3c493fe7-33a3-4d92-b57f-50d4e29c3391/scratch/KDJ_beans/bwa_Andean/gatk_all_samples/1A.bcftools_filter_beans.sh
+
+1B/ Max Heterozygosity filtering in TASSEL
+
+1C/ Pruning and thinning VCF for ADMIXTURE
+sbatch -J bcftools --mem 30G -c 1 -N 1 -p ei-medium --wrap "source bcftools-1.10.2;bcftools +prune -l 0.5 -w 1000 Andean_Haplotypecaller_filtered_maxhetero0.2_ID.vcf.gz -Oz -o Andean_Haplotypecaller_filtered_maxhetero0.2_ID_LD-0.5.vcf.gz"
+
+2A/ Convert VCF to bed file for ADMIXTURE
+sbatch -J plink -o plink.log --mem 50G -c 1 -N 1 -p ei-medium -t 2-0 --wrap "source plink-1.90;plink --vcf Andean_Haplotypecaller_filtered_maxhetero0.2_ID_LD-0.5_thin-w10.vcf.gz --make-bed --out Andean_Haplotypecaller_filtered_maxhetero0.2_ID_LD-0.5_thin-w10"
+
+2B/ Run ADMIXTURE
+/ei/projects/3/3c493fe7-33a3-4d92-b57f-50d4e29c3391/scratch/KDJ_beans/bwa_Andean/gatk_all_samples/ADMIXTURE/2B.ADMIXTURE.sh
+
+3/ Plotting in R
+3.ggplot_ADMX.r

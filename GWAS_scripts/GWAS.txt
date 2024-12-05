@@ -1,0 +1,28 @@
+GWAS; 
+1/ Filtering VCF for GWAS
+/ei/projects/3/3c493fe7-33a3-4d92-b57f-50d4e29c3391/scratch/KDJ_beans/bwa_Andean/gatk_all_samples/1.bcftools_filter_beans.sh
+
+2/ Convert the VCF to hapmap 
+/ei/projects/3/3c493fe7-33a3-4d92-b57f-50d4e29c3391/scratch/KDJ_beans/bwa_Andean/gatk_filter_GWAS/2.vcf_to_hap_NGSEP.sh
+
+3/ Create phenotype table in numeric format
+
+4A/ Write R script to run GAPIT by trait in the singularity. 
+Ran on the whole panel and Andean panel
+/ei/projects/3/3c493fe7-33a3-4d92-b57f-50d4e29c3391/scratch/KDJ_beans/bwa_Andean/gatk_filter_GWAS/GAPIT_chrs/4A.gapit_pca3_thin5_bytrait.R
+
+4B/ Script to run the GAPIT R script on the HPC
+Ran on the whole panel and Andean panel
+/ei/projects/3/3c493fe7-33a3-4d92-b57f-50d4e29c3391/scratch/KDJ_beans/bwa_Andean/gatk_filter_GWAS/GAPIT_chrs/4B._run_gapit_newversion.sh
+
+5/ Find the most significant QTLs
+/ei/projects/3/3c493fe7-33a3-4d92-b57f-50d4e29c3391/scratch/KDJ_beans/bwa_Andean/gatk_filter_GWAS/GAPIT_chrs/5.find_qtls_in_gapit_results_csv.sh
+
+6/ Plotting Manhattan plots in R
+6.Manhattan_det.R
+
+7A/ Identify the impacts of SNPs with SNPeff
+/ei/projects/3/3c493fe7-33a3-4d92-b57f-50d4e29c3391/scratch/KDJ_beans/bwa_Andean/gatk_filter_GWAS/SNPeff/7A.run_SNPeff.sh
+
+7B/ Select only HIGH mutations 
+sbatch -J grep -p ei-short -c 1 -N 1 --mem 10G --wrap "grep -vE "(LOW|MODERATE)" Andean_Haplotypecaller_GWAS_ann.vcf > Andean_Haplotypecaller_GWAS_ann_HIGH_header.vcf"
