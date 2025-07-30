@@ -26,3 +26,9 @@ Ran on the whole panel and Andean panel
 
 7B/ Select only HIGH mutations 
 sbatch -J grep -p ei-short -c 1 -N 1 --mem 10G --wrap "grep -vE "(LOW|MODERATE)" Andean_Haplotypecaller_GWAS_ann.vcf > Andean_Haplotypecaller_GWAS_ann_HIGH_header.vcf"
+
+8/ PCA from GAPIT results 
+In R
+Plot PCA and EV 
+
+8.PCAs-GAPIT.R

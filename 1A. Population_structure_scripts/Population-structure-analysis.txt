@@ -24,3 +24,7 @@ sbatch -J plink -o plink.log --mem 50G -c 1 -N 1 -p ei-medium -t 2-0 --wrap "sou
 3.Pophelper.R
 4.ggplot_ADMX.r
 5.CV_error.R
+
+4/ Can plot PCA from this 
+
+6.PCAs-ADMX.R
