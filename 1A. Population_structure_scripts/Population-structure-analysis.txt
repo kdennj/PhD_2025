@@ -15,4 +15,6 @@ sbatch -J plink -o plink.log --mem 50G -c 1 -N 1 -p ei-medium -t 2-0 --wrap "sou
 /ei/projects/3/3c493fe7-33a3-4d92-b57f-50d4e29c3391/scratch/KDJ_beans/bwa_Andean/gatk_all_samples/ADMIXTURE/2B.ADMIXTURE.sh
 
 3/ Plotting in R
-3.ggplot_ADMX.r
+3.Pophelper.R
+4.ggplot_ADMX.r
+4.CV_error.R
