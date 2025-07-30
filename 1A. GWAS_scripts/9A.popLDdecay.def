@@ -1,0 +1,23 @@
+BootStrap: yum
+OSVersion: 9
+MirrorURL: http://yum-repos.hpccluster/AlmaLinux/9/os/$basearch/
+Include: yum
+
+%environment
+export PATH=/opt/software/mamba/bin:/opt/software/mamba_r/bin:$PATH
+
+%post
+mkdir -p /opt/software && cd /opt/software
+yum -y install wget git which tar gzip bzip2 findutils langpacks-en_GB.noarch
+
+mkdir -p /opt/software && cd /opt/software
+yum -y install wget git which tar gzip bzip2 findutils langpacks-en_GB.noarch
+ 
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh
+bash Miniforge3-Linux-x86_64.sh -b -p /opt/software/mamba
+export PATH=$PATH:/opt/software/mamba/bin
+mamba create -y -p /opt/software/mamba_r -c conda-forge -c bioconda
+mamba install -y -c bioconda popLDdecay 
+export PATH=/opt/software/mamba_r/bin:$PATH
+
+rm -rf Miniforge3-Linux-x86_64.sh

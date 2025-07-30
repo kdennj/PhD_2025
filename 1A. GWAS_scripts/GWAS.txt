@@ -32,3 +32,17 @@ In R
 Plot PCA and EV 
 
 8.PCAs-GAPIT.R
+
+9/ Calculate LD for the panel 
+Calculate LD to calculate size of QTLs and distance from SNPs to investigate
+
+To calculate LD used popLDdecay 
+Built singularity on the HPC with 9A.popLDdecay.def
+sudo singularity build --sandbox popLDdecay ~/singularities/def_files/popLDdecay.def
+sudo singularity build popLDdecay.img popLDdecay/
+
+Run popLDdecay on vcfs which the whole diversity panel and subpopulations if wanted
+9B.popLDdecay.sh
+
+Plot in R 
+9C.LD_decay_plot.R
