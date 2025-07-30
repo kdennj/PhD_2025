@@ -8,3 +8,4 @@ PhD 2025 title; Exploring Genetic Diversity for Common Bean Improvement: Dissect
 
 1C. Supplementary information for paper and Chapter 2 of PhD 2025
 
+3. Other scripts and pipelines from PhD
