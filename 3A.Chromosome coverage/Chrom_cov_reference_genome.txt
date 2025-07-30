@@ -1,0 +1,102 @@
+Common beans have two domestication centres
+Merge the two reference genomes to calculate the coverage
+
+1/ Reference genomes
+
+Create symlinks for both reference genomes; 
+ln -s /data/Beans/ref_genomes/phytozome2/Pvulgaris/v2.1/assembly Andean_assembly
+
+ln -s /data/Beans/ref_genomes/phytozome2/PvulgarisLaborOvalle/v1.1/assembly Meso_assembly
+
+2/ Make sure we can distinguish two genomes
+
+cp Pvulgaris_442_v2.0.fa Pvulgaris_Andean_442_v2.0.fa
+cp PvulgarisLaborOvalle_670_v1.0.fa PvulgarisLaborOvalle_Meso_670_v1.0.fa
+
+Change to ChrA and ChrM 
+
+sed -i 's/Chr/ChrA/' Pvulgaris_Andean_442_v2.0.fa 
+sed -i 's/scaffold/scaffoldA/' Pvulgaris_Andean_442_v2.0.fa 
+
+sed -i 's/Chr/ChrM/' PvulgarisLaborOvalle_Meso_670_v1.0.fa
+sed -i 's/scaffold/scaffoldM/' PvulgarisLaborOvalle_Meso_670_v1.0.fa
+
+
+Confirm;
+
+grep -i 'Chr' Pvulgaris_Andean_442_v2.0.fa 
+grep -i 'scaffold' Pvulgaris_Andean_442_v2.0.fa 
+
+grep -i 'Chr' PvulgarisLaborOvalle_Meso_670_v1.0.fa
+grep -i 'scaffold' PvulgarisLaborOvalle_Meso_670_v1.0.fa
+
+3/ Merge two genomes
+sbatch  -c 1 -N 1 -p ei-short -J cat --wrap "cat Andean_assembly/Pvulgaris_Andean_442_v2.0.fa Meso_assembly/PvulgarisLaborOvalle_Meso_670_v1.0.fa > Andean_Meso_ref.fa"
+
+4/ Index genome
+
+sbatch --wrap "source samtools-1.7;samtools faidx Andean_Meso_ref.fa" -c 1 --mem 5G -J index -p ei-medium
+
+sbatch --wrap "source bwa-0.7.13;bwa index Andean_Meso_ref.fa" -c 1 -N 1 -p ei-medium -t 1-0 --mem=20G -J bwa
+
+
+5/ Make file with chromosome sizes
+
+sbatch -p ei-medium -o /scratch/KDJ_beans_project/ref_genomes/A_regions.txt --wrap "/tgac/software/testing/freebayes/1.0.2/x86_64/scripts/fasta_generate_regions.py /scratch/KDJ_beans_project/ref_genomes/Andean_assembly/Pvulgaris_Andean_442_v2.0.fa 100000000" 
+
+sbatch -p ei-medium -o /scratch/KDJ_beans_project/ref_genomes/M_regions.txt --wrap "/tgac/software/testing/freebayes/1.0.2/x86_64/scripts/fasta_generate_regions.py /scratch/KDJ_beans_project/ref_genomes/Meso_assembly/PvulgarisLaborOvalle_Meso_670_v1.0.fa 100000000" 
+
+
+6/ Make 100kb windows file 
+
+Input file has two columns, chromosome and length
+
+sbatch -J win -o win.log --mem 30G -c 1 -N 1 -p ei-medium --wrap "source bedtools-2.26.0;bedtools makewindows -g regions_MA.txt -w 100000 > AM_window100kb.bed"
+
+sbatch -J win -o win.log --mem 30G -c 1 -N 1 -p ei-medium --wrap "source bedtools-2.26.0;bedtools makewindows -g regions.txt -w 100000 > window100kb.bed"
+
+10/01/23
+sbatch -J win -o win.log --mem 30G -c 1 -N 1 -p ei-medium --wrap "source bedtools-2.26.0;bedtools makewindows -g MA_regions.txt -w 100000 > AM_window100kb_rep.bed"
+
+7/ New reference fastas based on 100kb regions
+
+Extracting 100kb regions from reference genomes based on coordinates in a BED file, and saving those sequences into a new FASTA file
+
+12.bedtools_getfasta.sh
+sbatch /data/KDJ_scripts/bedtools_getfasta.sh
+
+grep -c '>' Pvulgaris_Andean_442_v2.0.window100kb.fasta PvulgarisLaborOvalle_Meso_670_v1.0.window100kb.fasta
+Pvulgaris_Andean_442_v2.0.window100kb.fasta:4746
+PvulgarisLaborOvalle_Meso_670_v1.0.window100kb.fasta:5706
+
+8/ Align the references against each other 
+
+13.minimap.sh
+sbatch /data/KDJ_scripts/minimap.sh
+
+9/ Sort .paf files 
+
+cat A_100kbwindows-over-M.paf | sort -k1,1 -k11,11nr | awk '!x[$1]++' > A_100kbwindows-over-M.longest_alignmentotal.paf
+cat M_100kbwindows-over-A.paf | sort -k1,1 -k11,11nr | awk '!x[$1]++' > M_100kbwindows-over-A.longest_alignmentotal.paf
+
+-k species column you want sorted by 
+
+10/ Check file / chromosome lengths
+
+cat A_100kbwindows-over-M.paf | cut -f1 -d ':' | uniq -c
+
+11/ Qualimap 
+
+for line in $(cat all_bams_pp.txt); do sbatch -J Qualimap -p ei-short -c 1 -N 1 --wrap "source qualimap-2.2.1; qualimap bamqc -bam $line -outdir qualimap/$line "; do
+
+12/ Rename files to include sample names
+
+14.rename_files.sh
+bash /data/KDJ_scripts/14.rename_files.sh
+
+13/ Select the bottom of the files 
+
+for file in $(cat /KDJ_beans/samples_uniq_all.txt);
+do
+  tail -n 495 ${file}_genome_results.txt > ${file}_genome_results_tail.txt
+done

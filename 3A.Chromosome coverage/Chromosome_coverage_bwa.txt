@@ -1,0 +1,105 @@
+For the first run of chromosome coverage used bwa
+
+1/ Align files to concat reference genome
+
+1.align_bwa_M_k35.sh
+for line in $(cat ../samples_uniq_all.txt); do sbatch /data/KDJ_scripts/align_bwa_M_k35.sh $line; done
+
+2/ Get alignment statistics
+
+4.get_stats.sh
+bash /data/KDJ_scripts/4.get_stats.sh
+
+3/ Produce file with alignment stats for all accessions
+This will extract the details from each stats file and put it into a spreadsheet called align_stats.txt
+
+5.get_read_count_align_stats.pl
+perl /data/KDJ_scripts/5.get_read_count_align_stats.pl Andean_meso_align_stats.txt
+
+4/ Remove duplicate reads
+
+ls *sorted.bam > bamlist.txt
+
+for line in $(cat ../samples_uniq_all.txt); do sbatch /data/KDJ_scripts/7.Picard-remove.sh $line; done
+
+5/ Filter for unique and properly paired reads
+
+8.filter_flags.sh
+for line in $(cat ../samples_uniq_all.txt); do sbatch /data/KDJ_scripts/8.filter_flags.sh $line; done
+
+6/ We also tested other filterings with samtools 
+
+Further filtering of bam file to get only the primary alignment - hope to reduce the grass in the chromosome coverage plots 
+We are removing those which are not the primary alignment, those which are supplementary aligned, unmapped reads and the first in the pair 
+
+Supplementary aligned;
+These are reads which map to the genome but not as a whole. 
+For example half the read is from one section of the genome and the other half is inverse or separated by an insertion
+Chimeric read
+
+Primary aligned;
+Read mapped to genome 
+
+Other options;
+- 2372
+- 2316 - testing this - primary with supplementary removed
+- 2373 - tried but removed everything 
+- 256 - worked - primary only - same size as bam file before - nothing has been filtered
+
+6.samtools_primary_aligned.sh
+sbatch /data/KDJ_scripts/run_samtools_primary_aligned.sh
+
+7/ Get the bedgraph coverage file 
+
+9.bedtools_coverage_array.sh
+sbatch /data/KDJ_scripts/9.bedtools_coverage_array.sh
+
+8/ Get the mean coverage per 100kbp window
+
+10.bedgraph_cov_mean_array.sh
+sbatch /data/KDJ_scripts/bedgraph_cov_mean_array.sh
+
+9/ Get the median coverage per 100kbp window
+
+11.bedgraph_cov_median_array.sh
+sbatch /data/KDJ_scripts/bedgraph_cov_median_array.sh
+
+10/ If you have any windows with no coverage "." need to change these to 0
+
+11/ Plotting in R 
+
+
+
+
+#Notes 
+Chromosome coverage plots and mean coverage 
+
+
+Plotting ind average chromosome to each genome
+Using the average percentage coverage from bedgraphs mean coverage 
+First plots - plots by norm and plots by norm grouped together - using the mean of the entire genome to normalise 
+Second plots - plots by norm cov and plots by norm grouped cov - using the mean of each chromosome to normalise
+
+Plotting properly paired percentage to each genome
+Using qualimap results and properly paired percentages to each genome
+
+
+
+cov_chr - plot coverage by chromosome - Jose send script, could use values from chromosome coverage script
+	- looks like Janet used percentage properly paired stats per chromosome - I've use results from qualimap and bedgraphs
+
+Coverage across the chromosomes plots
+Deciding whether to use median, mean cov or coverage normalised by the mean 
+- I think that normalised is clearer 
+	- Plots are similar between cov and cov_by_norm
+- Janet used median
+	- I prefer mean as includes all values - doesn't remove outliers etc
+
+Deciding between bowtie2 and bwa
+- Those from bowtie2 have less grass/ noise - makes steps clearer
+
+*Use bowtie2 mean coverage normalised by mean plots 
+
+Plots av chromosome 
+- The original running of bowtie with low alignment has clear plots, showing which chromosomes have introgressions
+- With the bowtie2 plots you can see the differences but not as clearly 

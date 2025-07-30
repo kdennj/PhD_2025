@@ -93,5 +93,4 @@ for line in $(cat ../samples_uniq_all.txt); do sbatch /data/KDJ_scripts/7.Picard
 8.filter_flags.sh
 for line in $(cat ../samples_uniq_all.txt); do sbatch /data/KDJ_scripts/8.filter_flags.sh $line; done
 
-9/ Qualimap
-
+9/ Continue as in Chromosome_coverage_bwa.txt step 7
