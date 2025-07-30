@@ -1,0 +1,97 @@
+We tried running the chromosome coverage pipeline with bowtie instead of bwamem
+The idea is to see if we can reduce the grass in the plots 
+Trying to make differences clearer 
+
+Test method; Remove things that align to both genomes - do on two samples, heirloom and liborino 
+Put the names of the accessions in a file called bowtie_practise.txt
+
+1A/ Bowtie version 1
+Alternative to bwa, start from beginning 
+e.g. bowtie then samtools and check the chromosome coverage plots
+
+Index the reference genome;
+sbatch --wrap "source bowtie-1.1.2;bowtie-build Andean_Meso_ref.fa Andean_Meso_ref_bowtie " -c 1 -N 1 -p ei-medium --mem=30G -J bowtie
+
+Second paired alignment -1 -4 (forward and reverse) -- best --strata -m 1 --sam --no-unal --fr -X 450 
+
+1A.bowtie.sh
+for line in $(cat bowtie_practise.txt); do sbatch /data/KDJ_scripts/1A.bowtie.sh $line; done
+
+
+1B/ Bowtie version 2
+
+Index the reference genome;
+sbatch --wrap "source bowtie-2.4.5;bowtie2-build Andean_Meso_ref.fa Andean_Meso_ref_bowtie " -c 1 -N 1 -p ei-medium --mem=30G -J bowtie
+
+1B.bowtie2.sh
+for line in $(cat bowtie_practise.txt); do sbatch /data/KDJ_scripts/1B.bowtie2.sh $line; done
+
+
+1C/ Bowtie version 1 with -V flag
+
+1C.bowtieV.sh
+for line in $(cat bowtie_practise.txt); do sbatch /data/KDJ_scripts/1C.bowtieV.sh $line; done
+
+The `-v` alignment mode
+
+In `-v` mode, alignments may have no more than `V` mismatches, where
+`V` may be a number from 0 through 3 set using the `-v` option.
+Quality values are ignored.  The `-v` option is mutually exclusive with
+the `-n` option.
+
+2/ Quality check
+Confirm that bowtie is removing all but 1 alignment; 1 forward and 1 reverse for each genome
+
+cut -f1 S0014_MADEIRAMARRON_bowtie2.sam | grep -v '@' | head -n10000000 | sort | uniq -c
+
+      2 A00478:188:HTW3HDSX2:1:1413:9272:1955
+      2 A00478:188:HTW3HDSX2:1:1413:9290:1736
+      2 A00478:188:HTW3HDSX2:1:1413:9308:1548
+
+grep -v '@' S0014_MADEIRAMARRON_bowtie2.sam | head
+
+3/ Samtools sort
+
+3.run_samtools_sort.sh
+for line in $(cat ../samples.txt); do sbatch /data/KDJ_scripts/3.run_samtools_sort.sh $line; done
+
+4/ Alignment statistics
+
+Get the alignment statistics
+
+4.get_stats.sh
+bash /data/KDJ_scripts/4.get_stats.sh
+
+5/ Combine all alignment files into one 
+Written by Janet Higgins
+This will extract the details from each stats file and put it into a spreadsheet called align_stats.txt
+
+5.get_read_count_align_stats.pl
+perl /data/KDJ_scripts/get_read_count_align_stats.pl Andean_meso_align_stats.txt
+
+6/ Checked the alignent results for bowtie options
+
+bowtie;
+31%-29% 
+
+bowtieV;
+24%, 14%, 19%
+Do not continue with this
+
+bowtie2;
+77%,  79%, 74%
+
+Selected bowtie2 as best alignments with harsh flags
+
+7/ Remove duplicate reads
+
+7.Picard-remove.sh
+for line in $(cat ../samples_uniq_all.txt); do sbatch /data/KDJ_scripts/7.Picard-remove.sh $line; done
+
+8/ Filter flags
+
+8.filter_flags.sh
+for line in $(cat ../samples_uniq_all.txt); do sbatch /data/KDJ_scripts/8.filter_flags.sh $line; done
+
+9/ Qualimap
+
