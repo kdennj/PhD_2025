@@ -28,3 +28,6 @@ sbatch -J plink -o plink.log --mem 50G -c 1 -N 1 -p ei-medium -t 2-0 --wrap "sou
 4/ Can plot PCA from this 
 
 6.PCAs-ADMX.R
+
+5/ Can also plot heterozygosity against the population structure
+7.Heterozygosity.R
