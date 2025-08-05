@@ -11,6 +11,7 @@ library(ggstatsplot)
 library(ggplot2)
 library(ggrepel)
 library(ggsignif)
+library("ggpubr")
 
 #Thermal time 
 #Base temperature common beans 12 degrees
@@ -155,10 +156,10 @@ Sens6_drought_indeterminateclimb <- Sensor_6[, c(1:11)]
 D_IC <- list(Sens4_drought_indeterminateclimb, Sens5_drought_indeterminateclimb, Sens6_drought_indeterminateclimb)
 Drought_indeterminateclimb <- Reduce(function(x, y) merge(x, y, by = "Timestamp", all = TRUE), D_IC)
 
-write.xlsx(Control_determinate, "../Plots/Sensors/Control_determinate_sensors.xlsx")
-write.xlsx(Drought_determinate, "../Plots/Sensors/Drought_determinate_sensors.xlsx")
-write.xlsx(Drought_indeterminatebush, "../Plots/Sensors/Drought_indeterminatebush_sensors.xlsx")
-write.xlsx(Drought_indeterminateclimb, "../Plots/Sensors/Drought_indeterminateclimbing_sensors.xlsx")
+write.xlsx(Control_determinate, "../Plots/Sensors/Control_determinate_sensors_new.xlsx")
+write.xlsx(Drought_determinate, "../Plots/Sensors/Drought_determinate_sensors_new.xlsx")
+write.xlsx(Drought_indeterminatebush, "../Plots/Sensors/Drought_indeterminatebush_sensors_new.xlsx")
+write.xlsx(Drought_indeterminateclimb, "../Plots/Sensors/Drought_indeterminateclimbing_sensors_new.xlsx")
 
 ## Calculate means for the different measurements
 #Function to create average columns
@@ -292,11 +293,22 @@ long_ST <- melt(setDT(ST_all), id.vars = c("Timestamp"), variable.name = "Sensor
 long_EC <- melt(setDT(EC_all), id.vars = c("Timestamp"), variable.name = "Sensor")
 long_WC <- melt(setDT(WC_all), id.vars = c("Timestamp"), variable.name = "Sensor")
 
-write.xlsx(long, "../Plots/Sensors/WC_all_growthhabit.xlsx")
+write.xlsx(long_WC, "../Plots/Sensors/WC_all_growthhabit_new.xlsx")
 
 ######### Can start from here for sensors and plotting ----------
 #Read in excels 
-long <- read.xlsx("../Plots/Sensors/MP_all.xlsx")
+long_MP <- read.xlsx("../Plots/Sensors/MP_all_growthhabit_new.xlsx")
+long_ST <- read.xlsx("../Plots/Sensors/ST_all_growthhabit_new.xlsx")
+long_EC <- read.xlsx("../Plots/Sensors/EC_all_growthhabit_new.xlsx")
+long_WC <- read.xlsx("../Plots/Sensors/WC_all_growthhabit_new.xlsx")
+
+str(long_MP$Timestamp)
+
+long_MP$Timestamp <- as.POSIXct(long_MP$Timestamp * 86400 , origin = "1899-12-30")
+long_ST$Timestamp <- as.POSIXct(long_ST$Timestamp * 86400 , origin = "1899-12-30")
+long_EC$Timestamp <- as.POSIXct(long_EC$Timestamp * 86400 , origin = "1899-12-30")
+long_WC$Timestamp <- as.POSIXct(long_WC$Timestamp * 86400 , origin = "1899-12-30")
+
 
 
 #### Plotting ----------------------------------
@@ -306,23 +318,80 @@ end_date <- as.POSIXct("2023-09-09 00:00:00")
 long_filtered_MP <- long_MP[as.Date(long_MP$Timestamp) != as.Date("2023-09-08"), ]
 long_filtered_MP <- long_filtered_MP[as.Date(long_filtered_MP$Timestamp) != as.Date("2023-09-07"), ]
 long_filtered_MP <- long_filtered_MP[as.Date(long_filtered_MP$Timestamp) != as.Date("2023-09-06"), ]
+long_filtered_MP <- long_filtered_MP[!is.na(long_filtered_MP$value), ]
+
 
 #Plotting Matric Potential
 pdf("../Plots/Sensors/Matric_potential_all_growthhabit.pdf", height=5, width = 12)
-p_MP <- ggplot(long_filtered_MP, aes(x=Timestamp, y=value, group = Sensor, colour = Sensor)) +
+  p_MP <- ggplot(long_6hr_avg_MP, aes(x=TimeBlock, y=avg_value, group = Sensor, colour = Sensor)) +
   geom_line() +
-  geom_point(size = 1) + ylab("Soil Matric Potential (kPa)") + xlab("Date") +
+  coord_cartesian(ylim = c(-7700, 800)) +
+  geom_point(size = 0.8) + ylab("Soil Matric Potential (kPa)") + xlab("Date") +
   theme_bw() + scale_color_brewer(palette = "Dark2", labels = c("Control determinate bush", "Drought determinate bush", "Drought indeterminate bush", "Drought indeterminate climbing")) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype="dotted", linewidth = 1) +
-  geom_text(aes(x=as.POSIXct("2023-07-27 00:00:00"), label="\nIrrigation stopped", y=-8000), colour="black", angle=0, hjust = 1) +
-  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype="dotted", linewidth = 1) +
-  geom_text(aes(x= as.POSIXct("2023-08-25 00:00:00"), label="\nRecovery", y=-8000), colour="black", angle=0, hjust = 1) +
+  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype="dotted", linewidth = 0.8) +
+  #geom_text(aes(x=as.POSIXct("2023-07-27 00:00:00"), label="\nIrrigation stopped", y=-8000), colour="black", angle=0, hjust = 1) +
+  annotate("text", x = as.POSIXct("2023-07-27 00:00:00"), y = 900, label = "\nIrrigation stopped", colour = "black",
+           angle = 0, hjust = 1, size = 4, family = "sans", fontface = "plain") +
+  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype="dotted", linewidth = 0.8) +
+  #geom_text(aes(x= as.POSIXct("2023-08-25 00:00:00"), label="\nRecovery", y=-8000), colour="black", angle=0, hjust = 1) +
+  annotate("text", x = as.POSIXct("2023-08-25 00:00:00"), y = 900, label = "\nRecovery", colour = "black",
+           angle = 0, hjust = 1, size = 4, family = "sans", fontface = "plain") +
   scale_x_datetime(breaks = "3 days")
   #+ scale_x_continuous(expand = expansion(mult = c(0.1, 0.1)))
 p_MP
 dev.off()
 
+sensor_labels <- c(
+  "Control_determinatebush" = "Control Determinate Bush",
+  "Drought_determinatebush" = "Drought Determinate Bush",
+  "Drought_indeterminatebush" = "Drought Indeterminate Bush",
+  "Drought_indeterminateclimbing" = "Drought Indeterminate Climbing"
+)
+#unique(long_filtered_MP$Sensor)
+
+#Group by 6 hour blocks
+
+long_6hr_avg_MP <- long_filtered_MP %>%
+  mutate(
+    # Floor timestamps to nearest 6-hour block
+    TimeBlock = floor_date(Timestamp, unit = "6 hours")
+  ) 
+long_6hr_avg_MP <- long_6hr_avg_MP %>% group_by(Sensor, TimeBlock) %>%
+  dplyr::summarise(
+    avg_value = mean(value, na.rm = TRUE)
+  )
+
+#Test facet wrap
+pdf("../Plots/Sensors/Matric_potential_all_growthhabit_facet.pdf", height=5, width = 12)
+p_MP <- ggplot(long_6hr_avg_MP, aes(x = TimeBlock, y = avg_value)) +
+  geom_line(aes(group = Sensor, colour = Sensor)) +
+  geom_point(aes(colour = Sensor), size = 0.8) +
+  facet_wrap(~ Sensor, ncol = 4, labeller = labeller(Sensor = sensor_labels)) +  # You can change ncol as needed
+  ylab("Soil Matric Potential (kPa)") +
+  xlab("Date") +
+  theme_bw() +
+  coord_cartesian(ylim = c(-7700, 1000)) +
+  scale_color_brewer(
+    palette = "Dark2",
+    labels = c("Control Determinate Bush", "Drought Determinate Bush", 
+      "Drought Indeterminate Bush", "Drought Indeterminate Climbing"
+    )
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype = "dotted", linewidth = 0.8) +
+  annotate(
+    "text", x = as.POSIXct("2023-07-27 00:00:00"), y = 1150, label = "\nIrrigation \nstopped ",
+    colour = "black", angle = 0, hjust = 1, size = 3, family = "sans", fontface = "plain"
+  ) +
+  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype = "dotted", linewidth = 0.8) +
+  annotate("text", x = as.POSIXct("2023-08-25 00:00:00"),y = 1150, label = "\nRecovery ", 
+    colour = "black", angle = 0, hjust = 1, size = 3, family = "sans", fontface = "plain"
+  ) +
+  scale_x_datetime(breaks = "4 days") +
+  theme(plot.margin = margin(r = 12, l=10, t = 10, b = 10))
+p_MP
+dev.off()
 
 #Violin plot Matric Potential
 long_filtered_MP_more <- long_filtered_MP %>% filter(Timestamp >= "2023-07-27")
@@ -434,19 +503,66 @@ dev.off()
 long_filtered_ST <- long_ST[as.Date(long_ST$Timestamp) != as.Date("2023-09-08"), ]
 long_filtered_ST <- long_filtered_ST[as.Date(long_filtered_ST$Timestamp) != as.Date("2023-09-07"), ]
 long_filtered_ST <- long_filtered_ST[as.Date(long_filtered_ST$Timestamp) != as.Date("2023-09-06"), ]
+long_filtered_ST <- long_filtered_ST[!is.na(long_filtered_ST$value), ]
 
 
 pdf("../Plots/Sensors/Soil_temp_all_growthhabit.pdf", height=5, width = 12)
-p_ST <- ggplot(long_filtered_ST, aes(x=Timestamp, y=value, group = Sensor, colour = Sensor)) +
+p_ST <- ggplot(long_6hr_avg_ST, aes(x=TimeBlock, y=avg_value, group = Sensor, colour = Sensor)) +
   geom_line() +
-  geom_point(size = 1) + ylab("Soil Temperature (°C)") + xlab("Date") +
+  coord_cartesian(ylim = c(10, 36)) +
+  geom_point(size = 0.8) + ylab("Soil Temperature (°C)") + xlab("Date") +
   theme_bw() + scale_color_brewer(palette = "Dark2", labels = c("Control determinate bush", "Drought determinate bush", "Drought indeterminate bush", "Drought indeterminate climbing")) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype="dotted", linewidth = 1) +
-  geom_text(aes(x=as.POSIXct("2023-07-27 00:00:00"), label="\nIrrigation stopped", y=40), colour="black", angle=0, hjust = 0) +
-  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype="dotted", linewidth = 1) +
-  geom_text(aes(x= as.POSIXct("2023-08-25 00:00:00"), label="\nRecovery", y=40), colour="black", angle=0, hjust = 0) +
+  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype="dotted", linewidth = 0.8) +
+  #geom_text(aes(x=as.POSIXct("2023-07-27 00:00:00"), label="\nIrrigation stopped", y=40), colour="black", angle=0, hjust = 0) +
+  annotate("text", x = as.POSIXct("2023-07-27 00:00:00"), y = 36, label = "\nIrrigation stopped", colour = "black",
+           angle = 0, hjust = 1, size = 4, family = "sans", fontface = "plain") +
+  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype="dotted", linewidth = 0.8) +
+  #geom_text(aes(x= as.POSIXct("2023-08-25 00:00:00"), label="\nRecovery", y=40), colour="black", angle=0, hjust = 0) +
+  annotate("text", x = as.POSIXct("2023-08-25 00:00:00"), y = 36, label = "\nRecovery", colour = "black",
+           angle = 0, hjust = 1, size = 4, family = "sans", fontface = "plain") +
   scale_x_datetime(breaks = "3 days")
+p_ST
+dev.off()
+
+long_6hr_avg_ST <- long_filtered_ST %>%
+  mutate(
+    # Floor timestamps to nearest 6-hour block
+    TimeBlock = floor_date(Timestamp, unit = "6 hours")
+  ) 
+long_6hr_avg_ST <- long_6hr_avg_ST %>% group_by(Sensor, TimeBlock) %>%
+  dplyr::summarise(
+    avg_value = mean(value, na.rm = TRUE)
+  )
+
+
+pdf("../Plots/Sensors/Soil_temp_all_growthhabit_facet.pdf", height=5, width = 12)
+p_ST <- ggplot(long_6hr_avg_ST, aes(x = TimeBlock, y = avg_value)) +
+  geom_line(aes(group = Sensor, colour = Sensor)) +
+  geom_point(aes(colour = Sensor), size = 0.8) +
+  facet_wrap(~ Sensor, ncol = 4, labeller = labeller(Sensor = sensor_labels)) +  # You can change ncol as needed
+  ylab("Soil Temperature (°C)") +
+  xlab("Date") +
+  theme_bw() +
+  scale_color_brewer(
+    palette = "Dark2",
+    labels = c("Control Determinate Bush", "Drought Determinate Bush", 
+               "Drought Indeterminate Bush", "Drought Indeterminate Climbing"
+    )
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype = "dotted", linewidth = 0.8) +
+  annotate(
+    "text", x = as.POSIXct("2023-07-27 00:00:00"), y = 36, label = "\nIrrigation \nstopped ",
+    colour = "black", angle = 0, hjust = 1, size = 3, family = "sans", fontface = "plain"
+  ) +
+  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype = "dotted", linewidth = 0.8) +
+  annotate("text", x = as.POSIXct("2023-08-25 00:00:00"),y = 36, label = "\nRecovery ", 
+           colour = "black", angle = 0, hjust = 1, size = 3, family = "sans", fontface = "plain"
+  ) +
+  scale_x_datetime(breaks = "4 days") +
+  theme(plot.margin = margin(r = 12, l=25, t = 10, b = 10)) #+
+  #theme(strip.text = element_blank())
 p_ST
 dev.off()
 
@@ -487,20 +603,68 @@ dev.off()
 long_filtered_EC <- long_EC[as.Date(long_EC$Timestamp) != as.Date("2023-09-08"), ]
 long_filtered_EC <- long_filtered_EC[as.Date(long_filtered_EC$Timestamp) != as.Date("2023-09-07"), ]
 long_filtered_EC <- long_filtered_EC[as.Date(long_filtered_EC$Timestamp) != as.Date("2023-09-06"), ]
+long_filtered_EC <- long_filtered_EC[!is.na(long_filtered_EC$value), ]
 
 
 pdf("../Plots/Sensors/EC_all_growthhabit.pdf", height=5, width = 12)
-p_EC <- ggplot(long_filtered_EC, aes(x=Timestamp, y=value, group = Sensor, colour = Sensor)) +
+p_EC <- ggplot(long_6hr_avg_EC, aes(x=TimeBlock, y=avg_value, group = Sensor, colour = Sensor)) +
   geom_line() +
-  geom_point(size = 1) + ylab("Bulk EC (mS/cm)") + xlab("Date") +
+  geom_point(size = 0.8) + ylab("Bulk EC (mS/cm)") + xlab("Date") +
   theme_bw() + scale_color_brewer(palette = "Dark2", labels = c("Control determinate bush", "Drought determinate bush", "Drought indeterminate bush", "Drought indeterminate climbing")) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype="dotted", linewidth = 1) +
-  geom_text(aes(x=as.POSIXct("2023-07-27 00:00:00"), label="\nIrrigation stopped", y=0.28), colour="black", angle=0, hjust = 0) +
-  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype="dotted", linewidth = 1) +
-  geom_text(aes(x= as.POSIXct("2023-08-25 00:00:00"), label="\nRecovery", y=0.28), colour="black", angle=0, hjust = 0) +
+  coord_cartesian(ylim = c(0, 0.35)) +
+  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype="dotted", linewidth = 0.8) +
+  #geom_text(aes(x=as.POSIXct("2023-07-27 00:00:00"), label="\nIrrigation stopped", y=0.28), colour="black", angle=0, hjust = 0) +
+  annotate("text", x = as.POSIXct("2023-07-27 00:00:00"), y = 0.35, label = "\nIrrigation stopped", colour = "black",
+           angle = 0, hjust = 1, size = 4, family = "sans", fontface = "plain") +
+  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype="dotted", linewidth = 0.8) +
+  #geom_text(aes(x= as.POSIXct("2023-08-25 00:00:00"), label="\nRecovery", y=0.28), colour="black", angle=0, hjust = 0) +
+  annotate("text", x = as.POSIXct("2023-08-25 00:00:00"), y = 0.35, label = "\nRecovery", colour = "black",
+           angle = 0, hjust = 1, size = 4, family = "sans", fontface = "plain") +
   scale_x_datetime(breaks = "3 days")
 
+p_EC
+dev.off()
+
+long_6hr_avg_EC <- long_filtered_EC %>%
+  mutate(
+    # Floor timestamps to nearest 6-hour block
+    TimeBlock = floor_date(Timestamp, unit = "6 hours")
+  ) 
+long_6hr_avg_EC <- long_6hr_avg_EC %>% group_by(Sensor, TimeBlock) %>%
+  dplyr::summarise(
+    avg_value = mean(value, na.rm = TRUE)
+  )
+
+pdf("../Plots/Sensors/EC_all_growthhabit_facet.pdf", height=5, width = 12)
+p_EC <- ggplot(long_6hr_avg_EC, aes(x = TimeBlock, y = avg_value)) +
+  geom_line(aes(group = Sensor, colour = Sensor)) +
+  geom_point(aes(colour = Sensor), size = 0.8) +
+  facet_wrap(~ Sensor, ncol = 4, labeller = labeller(Sensor = sensor_labels)) +  # You can change ncol as needed
+  ylab("Bulk EC (mS/cm)") +
+  xlab("Date") +
+  theme_bw() +
+  coord_cartesian(ylim = c(0, 0.37)) +
+  scale_color_brewer(
+    palette = "Dark2",
+    labels = c("Control Determinate Bush", "Drought Determinate Bush", 
+               "Drought Indeterminate Bush", "Drought Indeterminate Climbing"
+    )
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype = "dotted", linewidth = 0.8) +
+  annotate(
+    "text", x = as.POSIXct("2023-07-27 00:00:00"), y = 0.37, label = "\nIrrigation \nstopped ",
+    colour = "black", angle = 0, hjust = 1, size = 3, family = "sans", fontface = "plain"
+  ) +
+  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype = "dotted", linewidth = 0.8) +
+  annotate("text", x = as.POSIXct("2023-08-25 00:00:00"),y = 0.37, label = "\nRecovery ", 
+           colour = "black", angle = 0, hjust = 1, size = 3, family = "sans", fontface = "plain"
+  ) +
+  scale_x_datetime(breaks = "4 days") +
+  theme(plot.margin = margin(r = 12, l=25, t = 10, b = 10))
+#+
+  #theme(strip.text = element_blank())
 p_EC
 dev.off()
 
@@ -542,18 +706,67 @@ dev.off()
 long_filtered <- long_WC[as.Date(long_WC$Timestamp) != as.Date("2023-09-08"), ]
 long_filtered <- long_filtered[as.Date(long_filtered$Timestamp) != as.Date("2023-09-07"), ]
 long_filtered <- long_filtered[as.Date(long_filtered$Timestamp) != as.Date("2023-09-06"), ]
+long_filtered <- long_filtered[!is.na(long_filtered$value), ]
+
 
 pdf("../Plots/Sensors/water_content_all_growthhabit.pdf", height=5, width = 12)
-p_WC <- ggplot(long_filtered, aes(x=Timestamp, y=value, group = Sensor, colour = Sensor)) +
+p_WC <- ggplot(long_6hr_avg_WC, aes(x=TimeBlock, y=avg_value, group = Sensor, colour = Sensor)) +
   geom_line() +
-  geom_point(size = 1) + ylab("Water content (m³/m³)") + xlab("Date") +
+  coord_cartesian(ylim = c(0.05, 0.34)) +
+  geom_point(size = 0.8) + ylab("Water content (m³/m³)") + xlab("Date") +
   theme_bw() + scale_color_brewer(palette = "Dark2", labels = c("Control determinate bush", "Drought determinate bush", "Drought indeterminate bush", "Drought indeterminate climbing")) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype="dotted", linewidth = 1) +
-  geom_text(aes(x=as.POSIXct("2023-07-27 00:00:00"), label="\nIrrigation stopped", y=0.045), colour="black", angle=0, hjust = 0) +
-  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype="dotted", linewidth = 1) +
-  geom_text(aes(x= as.POSIXct("2023-08-25 00:00:00"), label="\nRecovery", y=0.045), colour="black", angle=0, hjust = 0) +
+  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype="dotted", linewidth = 0.8) +
+  #geom_text(aes(x=as.POSIXct("2023-07-27 00:00:00"), label="\nIrrigation stopped", y=0.045), colour="black", angle=0, hjust = 0) +
+  annotate("text", x = as.POSIXct("2023-07-27 00:00:00"), y = 0.34, label = "\nIrrigation stopped", colour = "black",
+           angle = 0, hjust = 1, size = 4, family = "sans", fontface = "plain") +
+  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype="dotted", linewidth = 0.8) +
+  #geom_text(aes(x= as.POSIXct("2023-08-25 00:00:00"), label="\nRecovery", y=0.045), colour="black", angle=0, hjust = 0) +
+  annotate("text", x = as.POSIXct("2023-08-25 00:00:00"), y = 0.34, label = "\nRecovery", colour = "black",
+           angle = 0, hjust = 1, size = 4, family = "sans", fontface = "plain") +
   scale_x_datetime(breaks = "3 days")
+p_WC
+dev.off()
+
+long_6hr_avg_WC <- long_filtered %>%
+  mutate(
+    # Floor timestamps to nearest 6-hour block
+    TimeBlock = floor_date(Timestamp, unit = "6 hours")
+  ) 
+long_6hr_avg_WC <- long_6hr_avg_WC %>% group_by(Sensor, TimeBlock) %>%
+  dplyr::summarise(
+    avg_value = mean(value, na.rm = TRUE)
+  )
+
+pdf("../Plots/Sensors/WC_all_growthhabit_facet.pdf", height=5, width = 12)
+p_WC <- ggplot(long_6hr_avg_WC, aes(x = TimeBlock, y = avg_value)) +
+  geom_line(aes(group = Sensor, colour = Sensor)) +
+  geom_point(aes(colour = Sensor), size = 0.8) +
+  facet_wrap(~ Sensor, ncol = 4, labeller = labeller(Sensor = sensor_labels)) +  # You can change ncol as needed
+  ylab("Water content (m³/m³)") +
+  xlab("Date") +
+  theme_bw() +
+  coord_cartesian(ylim = c(0.05, 0.34)) +
+  scale_color_brewer(
+    palette = "Dark2",
+    labels = c("Control Determinate Bush", "Drought Determinate Bush", 
+               "Drought Indeterminate Bush", "Drought Indeterminate Climbing"
+    )
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  geom_vline(xintercept = as.POSIXct("2023-07-27 00:00:00"), linetype = "dotted", linewidth = 0.8) +
+  annotate(
+    "text", x = as.POSIXct("2023-07-27 00:00:00"), y = 0.34, label = "\nIrrigation \nstopped ",
+    colour = "black", angle = 0, hjust = 1, size = 3, family = "sans", fontface = "plain"
+  ) +
+  geom_vline(xintercept = as.POSIXct("2023-08-25 00:00:00"), linetype = "dotted", linewidth = 0.8) +
+  annotate("text", x = as.POSIXct("2023-08-25 00:00:00"),y = 0.34, label = "\nRecovery ", 
+           colour = "black", angle = 0, hjust = 1, size = 3, family = "sans", fontface = "plain"
+  ) +
+  scale_x_datetime(breaks = "4 days") +
+  theme(plot.margin = margin(r = 12, l=25, t = 10, b = 10))
+#+
+  #theme(strip.text = element_blank())
 p_WC
 dev.off()
 
@@ -599,10 +812,10 @@ dev.off()
 ##### Put all of them in one plot  ----------
 library(ggpubr)
 
-pdf("../Plots/Sensors/allgrowthhabit_line.pdf", height=10, width = 12)
+pdf("../Plots/Sensors/allgrowthhabit_line_6HRS.pdf", height=16, width = 12)
 p1 <- ggarrange(p_MP, p_ST, p_EC, p_WC, 
-                ncol = 2, 
-                nrow = 2, 
+                ncol = 1, 
+                nrow = 4, 
                 legend = "bottom",
                 common.legend = T, 
                 labels = "AUTO"
@@ -610,8 +823,18 @@ p1 <- ggarrange(p_MP, p_ST, p_EC, p_WC,
 p1
 dev.off()
 
+pdf("../Plots/Sensors/allgrowthhabit_line_6HRS_nofacet.pdf", height=10, width = 10)
+p1 <- ggarrange(p_MP, p_ST, p_EC, p_WC, 
+                ncol = 2, 
+                nrow = 2, 
+                legend = "bottom",
+                common.legend = T, 
+                labels = "AUTO"
+)
+p1
+dev.off()
 
-pdf("../Plots/Sensors/allgrowthhabit_violin_irrigstopped.pdf", height=11, width = 12)
+pdf("../Plots/Sensors/allgrowthhabit_violin_irrigstopped2.pdf", height=11, width = 12)
 p2 <- ggarrange(ps_MP, ps_ST, ps_EC, ps_WC, 
                 ncol = 2, 
                 nrow = 2, 
