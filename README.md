@@ -8,4 +8,6 @@
 
 ### 1C. Supplementary information for paper and Chapter 2 of PhD 2025
 
+### 2. Scripts from Chapter 3 of thesis
+
 ### 3. Other scripts and pipelines from PhD
